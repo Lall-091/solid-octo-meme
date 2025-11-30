@@ -19,21 +19,21 @@ permissions:
 
 jobs:
   # Get the current step to only run the main job when the learner is on the same step.
-  get_current_step:
+  read_current_step_number:
     name: Check current step number
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - id: get_step
+      - id: read_step_from_file
         run: |
           echo "current_step=$(cat ./.github/steps/-step.txt)" >> $GITHUB_OUTPUT
     outputs:
-      current_step: ${{ steps.get_step.outputs.current_step }}
+      current_step: ${{ steps.read_step_from_file.outputs.current_step }}
 
-  on_welcome:
+  update_readme_on_welcome:
     name: On welcome
-    needs: get_current_step
+    needs: read_current_step_number
 
     # We will only run this action when:
     # 1. This repository isn't the template repository.
@@ -42,7 +42,7 @@ jobs:
     # Reference: https://docs.github.com/en/actions/learn-github-actions/expressions
     if: >-
       ${{ !github.event.repository.is_template
-          && needs.get_current_step.outputs.current_step == 0 }}
+          && needs.read_current_step_number.outputs.current_step == 0 }}
 
     # We'll run Ubuntu for performance instead of Mac or Windows.
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 0 # Let's get all the branches.
 
       # In README.md, switch step 0 for step 1.
-      - name: Update to step 1
+      - name: Advance workflow to step 1
         uses: skills/action-update-step@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
